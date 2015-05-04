@@ -2,12 +2,30 @@
 #include "Sheet.h"
 #include "error.h"
 
+#include "unzip.h"
+
 #include "../pugixml/pugiconfig.hpp"
 #include "../pugixml/pugixml.hpp"
 
 #include <string>
 #include <iostream>
 #include <assert.h>
+
+static void parseShardString(char* data, unsigned int size)
+{
+	WorkBook::Inst().loadSharedStrings(data, size);
+}
+
+static void parseWorkbook(char* data, unsigned int size)
+{
+	WorkBook::Inst().loadWorkbook(data, size);
+}
+
+static void parseSheet(char* data, unsigned int size)
+{
+	WorkBook::Inst().loadSheetData(data, size);
+}
+
 
 WorkBook& WorkBook::Inst()
 {
@@ -18,6 +36,7 @@ WorkBook& WorkBook::Inst()
 WorkBook::WorkBook()
 {
 	m_mapSheets.clear();
+	m_zipfile = NULL;
 }
 
 
@@ -30,6 +49,24 @@ WorkBook::~WorkBook()
 			delete it->second;
 	}
 	m_mapSheets.clear();
+	unzClose(m_zipfile);
+}
+
+bool WorkBook::load(const char* const filename)
+{
+	if (0 == filename)
+		return false;
+
+	m_zipfile = unzOpen64(filename);
+	bool b;
+	b = _extrafile(&m_zipfile, "xl/sharedStrings.xml", parseShardString);
+	assert(b);
+	b = _extrafile(&m_zipfile, "xl/workbook.xml", parseWorkbook);
+	assert(b);
+
+	//	do_extract_onefile(uf, "xl/workbook.xml", 0, 0, 0);
+
+	return true;
 }
 
 
@@ -54,22 +91,16 @@ void WorkBook::getSheetNames(std::vector<std::string>& v)
 	}
 }
 
-bool WorkBook::load(const char* const filename)
+bool WorkBook::loadWorkbook(const char* data, unsigned int size)
 {
-	if (NULL == filename)
-		return false;
-
-	this->loadSharedStrings();
-
 	pugi::xml_document doc;
-	pugi::xml_parse_result pResult = doc.load_file(filename, pugi::parse_default, pugi::encoding_auto);
+	pugi::xml_parse_result pResult = doc.load_buffer(data, size, pugi::parse_default, pugi::encoding_auto);//doc.load_file(filename, pugi::parse_default, pugi::encoding_auto);
 	if (pResult == false)
 	{
 		return false;
 	}
 
 	pugi::xml_node root = doc.first_child();
-	//pugi::xml_node sheetNode = root.find_node("sheets");
 	pugi::xml_node sheetNode;
 	for (pugi::xml_node tmpNode = root.first_child(); tmpNode; tmpNode = tmpNode.next_sibling())
 	{
@@ -95,20 +126,23 @@ bool WorkBook::load(const char* const filename)
 			// shaderstrings.xml
 			// sheet[i].xml
 
-			std::string _sheetfilename = "G:\\zData\\openxml_xlsx\\员工通讯录abc\\xl\\worksheets\\";
+			std::string _sheetfilename = "xl/worksheets/";
 			_sheetfilename += name;
 			_sheetfilename += ".xml";
-			loadSheetData(newSheet, _sheetfilename.c_str());
+
+			bool b = _extrafile(&m_zipfile, _sheetfilename.c_str(), parseSheet);
+
+			//loadSheetData(newSheet, _sheetfilename.c_str());
 		}
 	}
 
 	return true;
 }
 
-bool WorkBook::loadSharedStrings()
+bool WorkBook::loadSharedStrings(char* data, unsigned size)
 {
 	pugi::xml_document doc;
-	pugi::xml_parse_result pResult = doc.load_file("G:\\zData\\openxml_xlsx\\员工通讯录abc\\xl\\sharedStrings.xml", pugi::parse_default, pugi::encoding_auto);
+	pugi::xml_parse_result pResult = doc.load_buffer(data, size, pugi::parse_default, pugi::encoding_auto);//doc.load_file("G:\\zData\\openxml_xlsx\\员工通讯录abc\\xl\\sharedStrings.xml", pugi::parse_default, pugi::encoding_auto);
 	if (pResult == false)
 	{
 		return false;
@@ -137,11 +171,10 @@ bool WorkBook::loadSharedStrings()
 	return true;
 }
 
-bool WorkBook::loadSheetData(Sheet* sheet, const char* const filename)
+bool WorkBook::loadSheetData(char* data, unsigned size)
 {
-	sheet = NULL;
 	pugi::xml_document doc;
-	pugi::xml_parse_result pResult = doc.load_file(filename);
+	pugi::xml_parse_result pResult = doc.load_buffer(data, size, pugi::parse_default, pugi::encoding_auto);//doc.load_file(filename);
 	if (pResult == false)
 	{
 		return false;
@@ -224,4 +257,78 @@ bool WorkBook::loadSheetData(Sheet* sheet, const char* const filename)
 			}
 		}
 	}
+
+	return true;
+}
+
+
+
+
+bool WorkBook::_extrafile(void* pZip, const char* filename, funParser pfun)
+{
+	unzFile* puf = (unzFile*)pZip;
+	assert(puf);
+	unzFile& uf = *puf;
+	unz_file_info64 file_info;
+	char filename_inzip[256];
+	char* filename_withoutpath;
+	char* p;
+
+	char* buf;
+	unsigned int size_buf;
+
+	int err = UNZ_OK;
+	#define CASESENSITIVITY (0)
+	if (unzLocateFile(uf, filename, CASESENSITIVITY) != UNZ_OK)
+	{
+		assert(false);
+		return false;
+	}
+
+	err = unzGetCurrentFileInfo64(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+	if (err != UNZ_OK)
+	{
+		assert(false);
+		return false;
+	}
+	p = filename_withoutpath = filename_inzip;
+	while ((*p) != '\0')
+	{
+		if (((*p) == '/') || (*p) == '\\')
+			filename_withoutpath = p + 1;
+		p++;
+	}
+
+	//一定要走这里...扫后阅读它的源码;
+	err = unzOpenCurrentFilePassword(uf, 0);
+	if (err != UNZ_OK)
+	{
+		printf("error %d with zipfile in unzOpenCurrentFilePassword\n", err);
+	}
+
+	assert(err == UNZ_OK);
+
+	printf("parse [%s] uncompress size is [%d]\n", filename, file_info.uncompressed_size);
+	buf = (char*)malloc(static_cast<size_t>(file_info.uncompressed_size));
+	size_buf = static_cast<unsigned int>(file_info.uncompressed_size);
+	//#define WRITEBUFFERSIZE (8192)
+	//size_buf = WRITEBUFFERSIZE;
+	//buf = (char*)malloc(size_buf);
+	do
+	{
+		err = unzReadCurrentFile(uf, (void*)buf, size_buf);
+		if (err < 0)
+		{
+			printf("error %d with zipfile in unzReadCurrentFile\n", err);
+			break;
+		}
+		if (err > 0)
+		{
+			pfun(buf, size_buf);
+		}
+	} while (err > 0);
+
+	free(buf);
+	err = unzCloseCurrentFile(uf);
+	return true;
 }

@@ -1,11 +1,9 @@
 #include <stdio.h>
-
 #include "./WorkBook.h"
 
 int main(int argc, char** argv) {
 
-	
-	WorkBook::Inst().load("G:\\zData\\openxml_xlsx\\员工通讯录abc\\xl\\workbook.xml");
+	WorkBook::Inst().load("G:\\zData\\openxml_xlsx\\员工通讯录.xlsx");
 	return 0;
 }
 

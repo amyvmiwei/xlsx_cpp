@@ -51,12 +51,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>./;./Include;./minizip;D:\GitHub\xlsx_cpp\Include;D:\GitHub\xlsx_cpp\minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\GitHub\xlsx_cpp\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -78,6 +81,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\minizip\crypt.h" />
+    <ClInclude Include="..\minizip\ioapi.h" />
+    <ClInclude Include="..\minizip\iowin32.h" />
+    <ClInclude Include="..\minizip\unzip.h" />
+    <ClInclude Include="..\minizip\zip.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="error.h" />
     <ClInclude Include="ExcelOpenXml.h" />
@@ -86,6 +94,10 @@
     <ClInclude Include="WorkBook.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\minizip\ioapi.c" />
+    <ClCompile Include="..\minizip\iowin32.c" />
+    <ClCompile Include="..\minizip\unzip.c" />
+    <ClCompile Include="..\minizip\zip.c" />
     <ClCompile Include="..\pugixml\pugixml.cpp" />
     <ClCompile Include="Cell.cpp" />
     <ClCompile Include="error.cpp" />
