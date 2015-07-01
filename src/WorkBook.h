@@ -29,6 +29,7 @@ public:
 	bool		loadWorkbook		(const char* data, unsigned int size);
 	bool		loadSharedStrings	(char* pdata, unsigned size);
 	bool		loadSheetData		(char* pdata, unsigned size);
+	bool		loadStyle			(char* pdata, unsigned size);
 
 private:
 	bool		_extrafile(void* pZip, const char* filename, funParser pfun);
@@ -36,7 +37,7 @@ private:
 private:
 	std::map<std::string, Sheet*>	m_mapSheets;
 	SharedStrings					m_sharedStrings;
-
+	std::vector<int>				m_styleID;
 
 	unzFile		m_zipfile;
 };

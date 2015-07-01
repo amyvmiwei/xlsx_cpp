@@ -49,6 +49,12 @@
     <ClInclude Include="WorkBook.h">
       <Filter>base</Filter>
     </ClInclude>
+    <ClInclude Include="date.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="dateOffset.h">
+      <Filter>base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\minizip\ioapi.c">
@@ -87,5 +93,16 @@
     <ClCompile Include="WorkBook.cpp">
       <Filter>base</Filter>
     </ClCompile>
+    <ClCompile Include="date.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+    <ClCompile Include="dateOffset.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="note.txt">
+      <Filter>资源文件</Filter>
+    </Text>
   </ItemGroup>
 </Project>

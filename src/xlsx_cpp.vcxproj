@@ -87,6 +87,8 @@
     <ClInclude Include="..\minizip\unzip.h" />
     <ClInclude Include="..\minizip\zip.h" />
     <ClInclude Include="Cell.h" />
+    <ClInclude Include="date.h" />
+    <ClInclude Include="dateOffset.h" />
     <ClInclude Include="error.h" />
     <ClInclude Include="ExcelOpenXml.h" />
     <ClInclude Include="SharedStrings.h" />
@@ -100,12 +102,17 @@
     <ClCompile Include="..\minizip\zip.c" />
     <ClCompile Include="..\pugixml\pugixml.cpp" />
     <ClCompile Include="Cell.cpp" />
+    <ClCompile Include="date.cpp" />
+    <ClCompile Include="dateOffset.cpp" />
     <ClCompile Include="error.cpp" />
     <ClCompile Include="ExcelOpenXml.cpp" />
     <ClCompile Include="SharedStrings.cpp" />
     <ClCompile Include="Sheet.cpp" />
     <ClCompile Include="testmain.cpp" />
     <ClCompile Include="WorkBook.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="note.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

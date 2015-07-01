@@ -1,7 +1,59 @@
 #include <stdio.h>
 #include "./WorkBook.h"
+#include "date.h"
+
+// int sumDay(int y, int m, int d)
+// {
+// 	unsigned char x[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+// 	int i, s = 0;
+// 	for (i = 1; i < y; i++)
+// 	{	if (i % 4 == 0 && i % 100 != 0 || i % 400 == 0)
+// 			s += 366;//闰年
+// 		else
+// 			s += 365;//平年
+// 	}
+// 
+// 	if (y % 4 == 0 && y % 100 != 0 || y % 400 == 0)
+// 		x[2] = 29;
+// 	else
+// 		x[2] = 28;
+// 
+// 	for (i = 1; i < m; i++)
+// 		s += x[i];//整月的天数
+// 
+// 	s += d;//日的天数
+// 
+// 	return s;//返回总天数,相对公元1年
+// }
+// 
+// int sumSecond(int h, int m, int s)
+// {
+// 	return h*3600+m*60+s;
+// }
+// 
+// void main()
+// {
+// 	unsigned int y1, m1, d1, y2, m2, d2;
+// 	int s1, s2;
+// 
+// 	printf("输入第一个年 月 日：");
+// 	scanf("%d %d %d", &y1, &m1, &d1);
+// 	printf("输入第二个年 月 日：");
+// 	scanf("%d %d %d", &y2, &m2, &d2);
+// 
+// 	s1 = sumDay(y1, m1, d1);
+// 	s2 = sumDay(y2, m2, d2);
+// 
+// 	if (s1 > s2)
+// 		printf("相差天数:%ld\n", s1 - s2);
+// 	else
+// 		printf("相差天数:%ld\n", s2 - s1);
+// }
+
 
 int main(int argc, char** argv) {
+//	TimeFromExcelTime(41640.1875, false);
+
 
 	WorkBook::Inst().load("G:\\zData\\openxml_xlsx\\员工通讯录.xlsx");
 	return 0;

@@ -1,6 +1,7 @@
 #include "WorkBook.h"
 #include "Sheet.h"
 #include "error.h"
+#include "date.h"
 
 #include "unzip.h"
 
@@ -10,6 +11,11 @@
 #include <string>
 #include <iostream>
 #include <assert.h>
+
+static void parseStyle(char* data, unsigned int size)
+{
+	WorkBook::Inst().loadStyle(data, size);
+}
 
 static void parseShardString(char* data, unsigned int size)
 {
@@ -59,6 +65,8 @@ bool WorkBook::load(const char* const filename)
 
 	m_zipfile = unzOpen64(filename);
 	bool b;
+	b = _extrafile(&m_zipfile, "xl/styles.xml", parseStyle);
+	assert(b);
 	b = _extrafile(&m_zipfile, "xl/sharedStrings.xml", parseShardString);
 	assert(b);
 	b = _extrafile(&m_zipfile, "xl/workbook.xml", parseWorkbook);
@@ -171,6 +179,38 @@ bool WorkBook::loadSharedStrings(char* data, unsigned size)
 	return true;
 }
 
+bool WorkBook::loadStyle(char* data, unsigned size)
+{
+	pugi::xml_document doc;
+	pugi::xml_parse_result pResult = doc.load_buffer(data, size, pugi::parse_default, pugi::encoding_auto);//doc.load_file(filename);
+	if (pResult == false)
+	{
+		return false;
+	}
+
+	pugi::xml_node root = doc.first_child();
+	pugi::xml_node sheetNode;
+	for (pugi::xml_node tmpNode = root.first_child(); tmpNode; tmpNode = tmpNode.next_sibling())
+	{
+		if (tmpNode.name() == std::string("cellXfs")) {
+			sheetNode = tmpNode;
+			break;
+		}
+	}
+
+	if (sheetNode.empty())
+	{
+	}
+	else
+	{
+		for (pugi::xml_node row = sheetNode.first_child(); row; row = row.next_sibling())
+		{
+			int ftmID = row.attribute("numFmtId").as_int();
+			m_styleID.push_back(ftmID);
+		}
+	}
+}
+
 bool WorkBook::loadSheetData(char* data, unsigned size)
 {
 	pugi::xml_document doc;
@@ -199,6 +239,7 @@ bool WorkBook::loadSheetData(char* data, unsigned size)
 		{
 			std::string r = row.attribute("r").as_string();
 			
+			std::cout  << std::endl;
 			for (pugi::xml_node c = row.first_child(); c; c = c.next_sibling())
 			{
 				if (c.name() != std::string("c"))
@@ -213,47 +254,67 @@ bool WorkBook::loadSheetData(char* data, unsigned size)
 				//获得<v>value</v>
 				const char* svalue = c.child_value("v");
 
-				if (ct == std::string("s"))
+				if (ct == std::string("s"))			//string type;
 				{
 					int tvalue = atoi(svalue);
 					
-					std::cout << m_sharedStrings.m_sharedStrings[tvalue] << std::endl;
+					std::cout << m_sharedStrings.m_sharedStrings[tvalue] << '\t';
 				}
-				else if (ct == std::string("b"))
+				else if (ct == std::string("b"))	//bool type;
 				{
 					int tvalue = atoi(svalue);
-					std::cout << ((tvalue==1) ?  "true" : "false") << std::endl;
+					std::cout << ((tvalue==1) ?  "true" : "false") << '\t';
 				}
 				else
 				{
+					double fValue = 0.0;
+					long long llValue = 0;
+					bool fOrll = false;
+	
 					std::string strIsFloat = svalue;
 					int findDot = strIsFloat.find(".");
 					if (-1 != findDot)
 					{
-						std::cout << atof(svalue) << std::endl;
+						fValue = strtod(svalue, NULL);
+						fOrll = true;
 					}
 					else
 					{
-						std::cout << atoll(svalue) << std::endl;
-
-						// 日期，年月日等格式。
+						llValue = atoll(svalue);
+					}
+					
+					//根据类型来做事情;
+					int styleID = m_styleID[cs];
+					switch (styleID)
+					{
+					case 14:
+					case 15:
+					case 16:
+					case 17:
+					case 20:
+					case 21:
+					case 22:
+						{
+							double d = fOrll?fValue:llValue;
+							tm t = TimeFromExcelTime(d, false);
+							char output[32]={0};
+							sprintf_s(output, 32, "%04d-%02d-%02d %02d:%02d:%02d", t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+							std::cout << output << '\t';
+						}
+						break;
+					case 0:
+					case 49:	//空行
+						{
+							if (fOrll)
+								std::cout << fValue << '\t';
+							else
+								std::cout << llValue << '\t';
+						}
+						break;
+					default:
+						assert(0);
 					}
 				}
-			
-				/* append value.
-				pugi::xml_node new_node = window.append_child(vecNode[i].first.c_str());
-				new_node.append_child(pugi::node_pcdata).set_value(vecNode[i].second.c_str());
-				*/
-
-// 				for (pugi::xml_node v = c.first_child(); v ; v = v.next_sibling())
-// 				{
-// 					if (v.name() != std::string("v"))
-// 						continue;
-// 					
-// 					const char* svalue = v.value();
-// 
-// 
-// 				}
 			}
 		}
 	}
